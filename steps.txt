@@ -1,0 +1,7 @@
+1. Install node modules, express : backend framework for node , mysql: for mysql connection , nodemon: server management and dotenv : to load
+environmental variables from .env file : use npm to install : a package.json file should be created. also install JWT using npm i jsonwebtoken
+2. connect node to mysql : create a folder config and a file dbServer.js inside
+   create a .env file to store db credentials : code for connection is in dbServer.js
+   create the server port connection
+3. Now lets login a user :
+
