@@ -48,26 +48,33 @@ app.post("/login", (req, res) => {
             if (err) throw (err)
             if (result.length == 0) {
                 console.log("--------> User does not exist")
+                res.json({
+                    msg: "The user credentials do not exist",
+                })
                 res.sendStatus(404)
             }
             else {
-                const hashedPassword = result[0].password
-                //get the hashedPassword from result
-                if (await (password)) {
-                console.log("---------> Login Successful")
-                // console.log("---------> Generating accessToken")
-                // const token = generateAccessToken({user: user})
-                // console.log(token)
-                // res.json({accessToken: token})
+                //with email selected wait for the password from the result
+                const hashedPassword = result[0].user_pass
+                console.log(hashedPassword + " " + password);
+                if (password === hashedPassword){
+                    console.log("---------> Login Successful")
+                    // console.log("---------> Generating accessToken")
+                    // const token = generateAccessToken({user: user})
+                    // console.log(token)
+                    // res.json({accessToken: token})
                     //return
                     res.json({
                         status: "success",
                         result
                     })
                     res.sendStatus(200);
-            } else {
-                res.send("Password incorrect!")
-            } //end of Password incorrect
+                } else {
+                    //res.send("Password incorrect!")
+                    res.json({
+                        msg: "Password Incorrect!"
+                    })
+                }
        }//end of User exists
      }) //end of connection.query()
     }) //end of db.connection()
