@@ -3,12 +3,15 @@ const app = express(); //using express in app
 const mysql = require("mysql") //requiring mysql lib
 const generateAccessToken = require("./config/generateAccessToken") //jwt
 const cors  = require('cors');
+const bcrypt = require('bcrypt')
+const md5 = require("md5");
 require("dotenv").config()
 const DB_HOST = process.env.DB_HOST
 const DB_USER = process.env.DB_USER
 const DB_PASSWORD = process.env.DB_PASSWORD
 const DB_DATABASE = process.env.DB_DATABASE
 const DB_PORT = process.env.DB_PORT
+
 
 
 const db = mysql.createPool({
@@ -38,6 +41,11 @@ app.use(function(req, res, next) {
 app.post("/login", (req, res) => {
     const user = req.body.email
     const password = req.body.password
+    //hashing password
+    bcrypt.hash(password,10,(err,hash) => {
+        console.log("hashed password is " + hash);
+    })
+    console.log("md5 password " + md5(password));
     db.getConnection ( async (err, connection)=> {
         if (err) throw (err)
         const sqlSearch = "Select * from wp_users where user_email = ?";
@@ -81,6 +89,36 @@ app.post("/login", (req, res) => {
  }) //end of app.post()
 //test these connections with the cmd : nodemon config/dbServer.js
 
+
+//get modules
+app.post("/modules", (req, res) => {
+    const user_id = req.body.user_Id;
+    db.getConnection ( async (err, connection)=> {
+        if (err) throw (err)
+        const sqlSearch = "Select * from wp_modules where user_id = ?";
+        const moduleSearch = mysql.format(sqlSearch,[user_id]);
+        await connection.query (moduleSearch, async (err, result) => {
+            connection.release()
+
+            if (err) throw (err)
+            if (result.length == 0) {
+                console.log("--------> No modules exist for this user")
+                res.json({
+                    msg: "No modules exist for this user",
+                })
+                res.sendStatus(404)
+            }
+            else {
+                    res.json({
+                        status: "success",
+                        result
+                    })
+                    res.sendStatus(200);
+            }//end of Module exists
+        }) //end of connection.query()
+    }) //end of db.connection()
+}) //end of app.post()
+//test these connections with the cmd : nodemon config/dbServer.js
 
 
 const port = process.env.PORT
