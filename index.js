@@ -1,36 +1,14 @@
 const express = require("express"); //requiring express
 const app = express(); //using express in app
-const mysql = require("mysql") //requiring mysql lib
-const generateAccessToken = require("./config/generateAccessToken") //jwt
-const cors  = require('cors');
-const bcrypt = require('bcrypt')
-const md5 = require("md5");
 require("dotenv").config()
-const DB_HOST = process.env.DB_HOST
-const DB_USER = process.env.DB_USER
-const DB_PASSWORD = process.env.DB_PASSWORD
-const DB_DATABASE = process.env.DB_DATABASE
-const DB_PORT = process.env.DB_PORT
-
-
-
-const db = mysql.createPool({
-    connectionLimit: 100,
-    host: DB_HOST,
-    user: DB_USER,
-    password: DB_PASSWORD,
-    database: DB_DATABASE,
-    port: DB_PORT
-});
-
-db.getConnection( (err, connection)=> {
-    if (err) throw (err)
-    console.log ("DB connected successful: " + connection.threadId)
-});
+//requiring functionality classes.
+const auth = require('./Authentication/login');  //authentication
+const moduleClass = require('./Modules/modules'); //for modules
+const userroles = require('./Authentication/roles'); //getting users role
 app.use(express.json());
 
 
-//LOGIN (AUTHENTICATE USER, and return accessToken)
+//LOGIN (AUTHENTICATE USER, and return accessToken ,get user role)
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -39,86 +17,29 @@ app.use(function(req, res, next) {
 
 
 app.post("/login", (req, res) => {
-    const user = req.body.email
-    const password = req.body.password
-    //hashing password
-    bcrypt.hash(password,10,(err,hash) => {
-        console.log("hashed password is " + hash);
-    })
-    console.log("md5 password " + md5(password));
-    db.getConnection ( async (err, connection)=> {
-        if (err) throw (err)
-        const sqlSearch = "Select * from wp_users where user_email = ?";
-        const search_query = mysql.format(sqlSearch,[user]);
-        await connection.query (search_query, async (err, result) => {
-            connection.release()
-
-            if (err) throw (err)
-            if (result.length == 0) {
-                console.log("--------> User does not exist")
-                res.json({
-                    msg: "The user credentials do not exist",
-                })
-                res.sendStatus(404)
-            }
-            else {
-                //with email selected wait for the password from the result
-                const hashedPassword = result[0].user_pass
-                console.log(hashedPassword + " " + password);
-                if (password === hashedPassword){
-                    console.log("---------> Login Successful")
-                    // console.log("---------> Generating accessToken")
-                    // const token = generateAccessToken({user: user})
-                    // console.log(token)
-                    // res.json({accessToken: token})
-                    //return
-                    res.json({
-                        status: "success",
-                        result
-                    })
-                    res.sendStatus(200);
-                } else {
-                    //res.send("Password incorrect!")
-                    res.json({
-                        msg: "Password Incorrect!"
-                    })
-                }
-       }//end of User exists
-     }) //end of connection.query()
-    }) //end of db.connection()
+       auth.loginUser(req,res);
  }) //end of app.post()
 //test these connections with the cmd : nodemon config/dbServer.js
 
+//get users role
+app.post("/userrole",(req,res) => {
+    userroles.getUsersRole(req,res);
+})
+
+///////////////////////////////////////////////////////////////////////////////////////
+//MODULES (get modules based off user id)
 
 //get modules
 app.post("/modules", (req, res) => {
-    const user_id = req.body.user_Id;
-    db.getConnection ( async (err, connection)=> {
-        if (err) throw (err)
-        const sqlSearch = "Select * from wp_modules where user_id = ?";
-        const moduleSearch = mysql.format(sqlSearch,[user_id]);
-        await connection.query (moduleSearch, async (err, result) => {
-            connection.release()
-
-            if (err) throw (err)
-            if (result.length == 0) {
-                console.log("--------> No modules exist for this user")
-                res.json({
-                    msg: "No modules exist for this user",
-                })
-                res.sendStatus(404)
-            }
-            else {
-                    res.json({
-                        status: "success",
-                        result
-                    })
-                    res.sendStatus(200);
-            }//end of Module exists
-        }) //end of connection.query()
-    }) //end of db.connection()
+    moduleClass.modulesForUser(req,res);
 }) //end of app.post()
 //test these connections with the cmd : nodemon config/dbServer.js
+
+
+
+
+
+
 
 
 const port = process.env.PORT
