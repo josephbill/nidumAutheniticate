@@ -36,4 +36,39 @@ function modulesForUser(req,res){
     }) //end of db.connection()
 }
 
-module.exports = {modulesForUser}
+function modulesForCompany(req,res){
+    //testing db connection
+    configurationVars.db.getConnection( (err, connection)=> {
+        if (err) throw (err)
+        console.log ("DB connected successful: " + connection.threadId)
+    });
+
+    const companyName = req.body.companyname;
+    configurationVars.db.getConnection ( async (err, connection)=> {
+        if (err) throw (err)
+        const sqlSearch = process.env.SQLMODULESCOMPANY;
+        const moduleSearch = mysql.format(sqlSearch,[companyName]);
+        await connection.query (moduleSearch, async (err, result) => {
+            connection.release()
+
+            if (err) throw (err)
+            if (result.length == 0) {
+                console.log("--------> No modules exist for this company")
+                res.json({
+                    msg: "No modules exist for this company",
+                })
+                res.sendStatus(404)
+            }
+            else {
+                console.log("modules found")
+                res.json({
+                    status: "success",
+                    result
+                })
+                res.sendStatus(200);
+            }//end of Module exists
+        }) //end of connection.query()
+    }) //end of db.connection()
+}
+
+module.exports = {modulesForUser, modulesForCompany}

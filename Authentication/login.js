@@ -16,9 +16,9 @@ function loginUser(req,res){
             console.log("hashed password is " + hash);
         })
         console.log("md5 password " + md5(password));
-    configurationVars.db.getConnection ( async (err, connection)=> {
+        configurationVars.db.getConnection ( async (err, connection)=> {
             if (err) throw (err)
-            const sqlSearch = "Select * from wp_users where user_email = ?";
+            const sqlSearch = process.env.SQLLOGIN;
             const search_query = mysql.format(sqlSearch,[user]);
             await connection.query (search_query, async (err, result) => {
                 connection.release()
@@ -28,7 +28,7 @@ function loginUser(req,res){
                     console.log("--------> User does not exist")
                     res.json({
                         msg: "The user credentials do not exist",
-                    })
+                     })
                     res.sendStatus(404)
                 }
                 else {
