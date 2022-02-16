@@ -7,7 +7,18 @@ const moduleClass = require('./Modules/modules'); //for modules
 const userroles = require('./Authentication/roles'); //getting users role
 const userprofile = require('./Authentication/userprofile'); //getting users profile
 const companies = require('./Company/usersCompany'); //get company stuff
+const bodyParser = require('body-parser'); //body-parser middleware
+const multer = require('multer'); //for file upload
+
+const mysql = require("mysql");
+const configurationVars = require("./configuration/constants");
+const path = require("path");
+
+
 app.use(express.json());
+
+
+
 
 
 //LOGIN (AUTHENTICATE USER, and return accessToken ,get user role)
@@ -16,12 +27,16 @@ app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
-
-
+//login
 app.post("/login", (req, res) => {
        auth.loginUser(req,res);
  }) //end of app.post()
 //test these connections with the cmd : nodemon config/dbServer.js
+
+//forgot password
+app.post("/forgotpassword",(req,res)=>{
+    auth.forgotPassword(req,res);
+})
 
 //get users role
 app.post("/userrole",(req,res) => {
@@ -40,6 +55,11 @@ app.post("/userfirstname",(req,res) => {
 //get users last name
 app.post("/userlastname",(req,res) => {
     userroles.getUserLastName(req,res);
+})
+
+//delete user
+app.delete("/deleteuser",(req,res)=>{
+    auth.deleteUser(req,res);
 })
 
 
@@ -69,6 +89,17 @@ app.post("/companynamedocs",(req,res)=> {
 app.post("/companyonboardingdocs",(req,res) => {
     companies.getOnboardingDocuments(req,res);
 })
+
+//upload documents
+let upload = multer({ dest: './uploads/'});
+let fs = require('fs');
+/** Permissible loading a single file,
+ the value of the attribute "name" in the form of "recfile". **/
+let type = upload.single('documentUrl');
+
+app.post('/upload', type, function (req,res) {
+    companies.postCompanyDocument(req,res);
+});
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
